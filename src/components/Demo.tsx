@@ -229,7 +229,7 @@ export default function Demo(
       <div className="w-[300px] mx-auto py-6 px-4">
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-gray-100 tracking-tight">NoContact</h2>
+            <h2 className="text-m font-bold text-gray-100 tracking-tight">NoContact</h2>
             <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center shadow-md overflow-hidden border border-gray-700/50">
               {userProfile?.pfp?.url ? (
                 <img 
