@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useEffect } from "react";
 import { Input } from "../components/ui/input";
 import { signIn, signOut, getCsrfToken } from "next-auth/react";
 import sdk, {
@@ -26,6 +26,14 @@ import { BaseError, UserRejectedRequestError } from "viem";
 import { useSession } from "next-auth/react";
 import { Label } from "~/components/ui/label";
 import { useFrame } from "~/components/providers/FrameProvider";
+
+interface UserProfile {
+  pfp: {
+    url: string;
+  };
+  username: string;
+  displayName: string;
+}
 
 export default function Demo(
   { title }: { title?: string } = { title: "Frames v2 Demo" }
@@ -166,6 +174,44 @@ export default function Demo(
     setIsContextOpen((prev) => !prev);
   }, []);
 
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+  
+  const fetchUserProfile = useCallback(async (fid: number) => {
+    setIsLoadingProfile(true);
+    try {
+      const response = await fetch(`https://api.warpcast.com/v2/user?fid=${fid}`, {
+        headers: {
+          'accept': 'application/json',
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch user profile');
+      }
+
+      const data = await response.json();
+      setUserProfile(data.result.user);
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    } finally {
+      setIsLoadingProfile(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    // Example FID - replace with actual FID from your app's context
+    fetchUserProfile(3); // Replace with actual FID
+  }, [fetchUserProfile]);
+
+  const [daysCount, setDaysCount] = useState("00");
+  const [isLogged, setIsLogged] = useState(false);
+
+  const handleLogToday = useCallback(() => {
+    setDaysCount("01");
+    setIsLogged(true);
+  }, []);
+
   if (!isSDKLoaded) {
     return <div>Loading...</div>;
   }
@@ -178,214 +224,77 @@ export default function Demo(
         paddingLeft: context?.client.safeAreaInsets?.left ?? 0,
         paddingRight: context?.client.safeAreaInsets?.right ?? 0,
       }}
+      className="min-h-screen bg-gray-950 font-rubik"
     >
-      <div className="w-[300px] mx-auto py-2 px-2">
-        <h1 className="text-2xl font-bold text-center mb-4">{title}</h1>
+      <div className="w-[300px] mx-auto py-6 px-4">
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-gray-100 tracking-tight">NoContact</h2>
+            <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center shadow-md overflow-hidden border border-gray-700/50">
+              {userProfile?.pfp?.url ? (
+                <img 
+                  src={userProfile.pfp.url} 
+                  alt={userProfile.displayName || userProfile.username}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="text-gray-300 font-medium text-sm">
+                  {isLoadingProfile ? '...' : 'AB'}
+                </span>
+              )}
+            </div>
+          </div>
 
-        <div className="mb-4">
-          <h2 className="font-2xl font-bold">Context</h2>
-          <button
-            onClick={toggleContext}
-            className="flex items-center gap-2 transition-colors"
+          <div className="bg-gray-900/50 rounded-xl shadow-lg p-6 border border-gray-800/50 backdrop-blur-sm">
+            <div className="flex flex-col items-center">
+              <div className="text-3xl font-bold text-gray-100 mb-3 tracking-tight">
+                {daysCount}
+              </div>
+              <div className="text-sm text-gray-400 font-medium tracking-wide">
+                days in nocontact with akhil
+              </div>
+            </div>
+          </div>
+          <Button 
+            onClick={handleLogToday} 
+            disabled={isLogged}
+            className={`w-full mt-4 ${
+              isLogged 
+                ? 'bg-gray-700 cursor-not-allowed opacity-75' 
+                : 'bg-gray-800 hover:bg-gray-700'
+            } text-gray-100 font-medium py-2.5 px-4 rounded-lg transition-colors duration-200 shadow-md tracking-wide border border-gray-700/50`}
           >
-            <span
-              className={`transform transition-transform ${
-                isContextOpen ? "rotate-90" : ""
-              }`}
-            >
-              ➤
-            </span>
-            Tap to expand
-          </button>
-
-          {isContextOpen && (
-            <div className="p-4 mt-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
-              <pre className="font-mono text-xs whitespace-pre-wrap break-words max-w-[260px] overflow-x-">
-                {JSON.stringify(context, null, 2)}
-              </pre>
-            </div>
-          )}
+            {isLogged ? 'Come Back Tomorrow' : 'Log Today'}
+          </Button>
         </div>
 
-        <div>
-          <h2 className="font-2xl font-bold">Actions</h2>
-
-          <div className="mb-4">
-            <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg my-2">
-              <pre className="font-mono text-xs whitespace-pre-wrap break-words max-w-[260px] overflow-x-">
-                sdk.actions.signIn
-              </pre>
+        <div className="mb-8">
+          <div className="bg-gray-900/50 rounded-xl shadow-lg p-6 border border-gray-800/50 backdrop-blur-sm">
+            <h3 className="text-lg font-semibold text-gray-100 mb-4">Progress</h3>
+            
+            <div className="grid grid-cols-7 gap-2 mb-3">
+              {[...Array(42)].map((_, index) => (
+                <div
+                  key={index}
+                  className={`w-full pt-[100%] relative rounded ${
+                    index === 30 ? 'bg-blue-500/70' : 'bg-gray-800/50'
+                  }`}
+                />
+              ))}
             </div>
-            <SignIn />
-          </div>
-
-          <div className="mb-4">
-            <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg my-2">
-              <pre className="font-mono text-xs whitespace-pre-wrap break-words max-w-[260px] overflow-x-">
-                sdk.actions.openUrl
-              </pre>
+            
+            <div className="text-sm text-gray-400 text-center mt-4">
+              Last 6 weeks
             </div>
-            <Button onClick={openUrl}>Open Link</Button>
-          </div>
-
-          <div className="mb-4">
-            <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg my-2">
-              <pre className="font-mono text-xs whitespace-pre-wrap break-words max-w-[260px] overflow-x-">
-                sdk.actions.openUrl
-              </pre>
-            </div>
-            <Button onClick={openWarpcastUrl}>Open Warpcast Link</Button>
-          </div>
-
-          <div className="mb-4">
-            <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg my-2">
-              <pre className="font-mono text-xs whitespace-pre-wrap break-words max-w-[260px] overflow-x-">
-                sdk.actions.viewProfile
-              </pre>
-            </div>
-            <ViewProfile />
-          </div>
-
-          <div className="mb-4">
-            <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg my-2">
-              <pre className="font-mono text-xs whitespace-pre-wrap break-words max-w-[260px] overflow-x-">
-                sdk.actions.close
-              </pre>
-            </div>
-            <Button onClick={close}>Close Frame</Button>
           </div>
         </div>
 
-        <div className="mb-4">
-          <h2 className="font-2xl font-bold">Last event</h2>
-
-          <div className="p-4 mt-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
-            <pre className="font-mono text-xs whitespace-pre-wrap break-words max-w-[260px] overflow-x-">
-              {lastEvent || "none"}
-            </pre>
-          </div>
-        </div>
-
-        <div>
-          <h2 className="font-2xl font-bold">Add to client & notifications</h2>
-
-          <div className="mt-2 mb-4 text-sm">
-            Client fid {context?.client.clientFid},
-            {added ? " frame added to client," : " frame not added to client,"}
-            {notificationDetails
-              ? " notifications enabled"
-              : " notifications disabled"}
-          </div>
-
-          <div className="mb-4">
-            <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg my-2">
-              <pre className="font-mono text-xs whitespace-pre-wrap break-words max-w-[260px] overflow-x-">
-                sdk.actions.addFrame
-              </pre>
+        <div className="space-y-6">
+          <div className="space-y-4">
+            <div className="bg-gray-900/50 rounded-xl shadow-lg p-6 border border-gray-800/50 backdrop-blur-sm">
+              <SignIn />
             </div>
-            {addFrameResult && (
-              <div className="mb-2 text-sm">
-                Add frame result: {addFrameResult}
-              </div>
-            )}
-            <Button onClick={addFrame} disabled={added}>
-              Add frame to client
-            </Button>
           </div>
-
-          {sendNotificationResult && (
-            <div className="mb-2 text-sm">
-              Send notification result: {sendNotificationResult}
-            </div>
-          )}
-          <div className="mb-4">
-            <Button onClick={sendNotification} disabled={!notificationDetails}>
-              Send notification
-            </Button>
-          </div>
-        </div>
-
-        <div>
-          <h2 className="font-2xl font-bold">Wallet</h2>
-
-          {address && (
-            <div className="my-2 text-xs">
-              Address: <pre className="inline">{truncateAddress(address)}</pre>
-            </div>
-          )}
-
-          {chainId && (
-            <div className="my-2 text-xs">
-              Chain ID: <pre className="inline">{chainId}</pre>
-            </div>
-          )}
-
-          <div className="mb-4">
-            <Button
-              onClick={() =>
-                isConnected
-                  ? disconnect()
-                  : connect({ connector: config.connectors[0] })
-              }
-            >
-              {isConnected ? "Disconnect" : "Connect"}
-            </Button>
-          </div>
-
-          <div className="mb-4">
-            <SignMessage />
-          </div>
-
-          {isConnected && (
-            <>
-              <div className="mb-4">
-                <SendEth />
-              </div>
-              <div className="mb-4">
-                <Button
-                  onClick={sendTx}
-                  disabled={!isConnected || isSendTxPending}
-                  isLoading={isSendTxPending}
-                >
-                  Send Transaction (contract)
-                </Button>
-                {isSendTxError && renderError(sendTxError)}
-                {txHash && (
-                  <div className="mt-2 text-xs">
-                    <div>Hash: {truncateAddress(txHash)}</div>
-                    <div>
-                      Status:{" "}
-                      {isConfirming
-                        ? "Confirming..."
-                        : isConfirmed
-                        ? "Confirmed!"
-                        : "Pending"}
-                    </div>
-                  </div>
-                )}
-              </div>
-              <div className="mb-4">
-                <Button
-                  onClick={signTyped}
-                  disabled={!isConnected || isSignTypedPending}
-                  isLoading={isSignTypedPending}
-                >
-                  Sign Typed Data
-                </Button>
-                {isSignTypedError && renderError(signTypedError)}
-              </div>
-              <div className="mb-4">
-                <Button
-                  onClick={handleSwitchChain}
-                  disabled={isSwitchChainPending}
-                  isLoading={isSwitchChainPending}
-                >
-                  Switch to {nextChain.name}
-                </Button>
-                {isSwitchChainError && renderError(switchChainError)}
-              </div>
-            </>
-          )}
         </div>
       </div>
     </div>

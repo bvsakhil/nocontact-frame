@@ -3,6 +3,12 @@ import type { Metadata } from "next";
 import { getSession } from "~/auth"
 import "~/app/globals.css";
 import { Providers } from "~/app/providers";
+import { Rubik } from "next/font/google";
+
+const rubik = Rubik({
+  subsets: ["latin"],
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: process.env.NEXT_PUBLIC_FRAME_NAME || "Frames v2 Demo",
@@ -17,7 +23,7 @@ export default async function RootLayout({
   const session = await getSession()
 
   return (
-    <html lang="en">
+    <html lang="en" className={rubik.className}>
       <body>
         <Providers session={session}>{children}</Providers>
       </body>
