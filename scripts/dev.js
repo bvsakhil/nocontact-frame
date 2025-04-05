@@ -82,7 +82,8 @@ async function startDev() {
     process.exit(1);
   }
 
-  const useTunnel = process.env.USE_TUNNEL === 'true';
+  // const useTunnel = process.env.USE_TUNNEL === 'true';
+  const useTunnel = true;
   let frameUrl;
 
   if (useTunnel) {

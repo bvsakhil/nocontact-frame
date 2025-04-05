@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import App from "./app";
+import { OnboardingFlow } from '~/components/OnboardingFlow';
 
 const appUrl = process.env.NEXT_PUBLIC_URL;
 
@@ -39,6 +39,6 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function Home() {
-  return (<App />);
+export default function HomePage() {
+  return <OnboardingFlow />;
 }
