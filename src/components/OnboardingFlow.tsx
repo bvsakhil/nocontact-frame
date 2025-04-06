@@ -2,16 +2,14 @@
 
 import { useState } from 'react';
 import { Welcome } from './Welcome';
-import { Username } from './Username';
 import { Name } from './Name';
 import { Relation } from './Relation';
 import { Duration } from './Duration';
 import { Home } from './Home';
 
-type OnboardingStep = 'welcome' | 'username' | 'name' | 'relation' | 'duration' | 'home';
+type OnboardingStep = 'welcome' | 'name' | 'relation' | 'duration' | 'home';
 
 interface UserData {
-  username: string;
   avoidName: string;
   relation: string;
   duration: number;
@@ -20,7 +18,6 @@ interface UserData {
 export function OnboardingFlow() {
   const [currentStep, setCurrentStep] = useState<OnboardingStep>('welcome');
   const [userData, setUserData] = useState<UserData>({
-    username: '',
     avoidName: '',
     relation: '',
     duration: 30,
@@ -29,8 +26,7 @@ export function OnboardingFlow() {
   const handleStepComplete = (step: OnboardingStep, data: Partial<UserData>) => {
     setUserData(prev => ({ ...prev, ...data }));
     const nextSteps: Record<OnboardingStep, OnboardingStep> = {
-      welcome: 'username',
-      username: 'name',
+      welcome: 'name',
       name: 'relation',
       relation: 'duration',
       duration: 'home',
@@ -43,12 +39,6 @@ export function OnboardingFlow() {
     switch (currentStep) {
       case 'welcome':
         return <Welcome onNext={() => handleStepComplete('welcome', {})} />;
-      case 'username':
-        return (
-          <Username
-            onNext={(username) => handleStepComplete('username', { username })}
-          />
-        );
       case 'name':
         return (
           <Name
@@ -64,11 +54,11 @@ export function OnboardingFlow() {
       case 'duration':
         return (
           <Duration
-            onNext={(duration) => handleStepComplete('duration', { duration })}
+            onNext={(duration) => handleStepComplete('duration', { duration: parseInt(duration) })}
           />
         );
       case 'home':
-        return <Home userData={userData} />;
+        return <Home days={userData.duration} totalDays={userData.duration} />;
       default:
         return null;
     }

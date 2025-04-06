@@ -14,7 +14,15 @@ export function Name({ onNext }: { onNext: (name: string) => void }) {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-white p-4">
+    <div 
+      className="flex flex-col items-center justify-between min-h-screen bg-white p-4"
+      style={{
+        backgroundImage: 'url(/hands.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      }}
+    >
       <div className="w-full max-w-md space-y-6">
         <div className="space-y-2">
           <h1 className="text-2xl font-bold text-[#002B5B] text-center">Who are you Avoiding?</h1>
